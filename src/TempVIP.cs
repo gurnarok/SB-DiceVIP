@@ -28,6 +28,10 @@ public class CPHInline
         }
         
         string groupName = "TEMPVIP";
+        if (!CPH.GroupExists(groupName))
+        {
+            CPH.AddGroup(groupName);
+        }
         int usr_roll = CPH.Between(1,20);
 
         string outputMsg = "";

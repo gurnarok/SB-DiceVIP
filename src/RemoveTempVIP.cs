@@ -11,8 +11,14 @@ public class CPHInline
     {
         // THE PLAN
         // 1. Get users that are in the TEMPVIP group
-        string groupname = "TEMPVIP";
-        List<GroupUser> groupUsers = CPH.UsersInGroup(groupname);
+        string groupName = "TEMPVIP";
+
+        if (!CPH.GroupExists(groupName))
+        {
+            CPH.AddGroup(groupName);
+        }
+
+        List<GroupUser> groupUsers = CPH.UsersInGroup(groupName);
 
         foreach(GroupUser userInfo in groupUsers)
         {
@@ -22,11 +28,11 @@ public class CPHInline
             long tempvip_expiry = CPH.GetTwitchUserVarById<long>(uid,"tempvip_expiry", true);
             if (curTime > tempvip_expiry)
             {
-                CPH.RemoveUserIdFromGroup(uid,Platform.Twitch,groupname);
+                CPH.RemoveUserIdFromGroup(uid,Platform.Twitch,groupName);
                 CPH.TwitchRemoveVip(uname);
             }
         }
-        
+
         return true;
     }
 }
