@@ -1,6 +1,5 @@
 using System;
 
-
 #if EXTERNAL_EDITOR
 public class TempVIP : CPHInlineBase
 #else
@@ -16,7 +15,7 @@ public class CPHInline
         // 4. if 1 -> timeout with msg
 
         CPH.TryGetArg("userId", out string userId);
-        CPH.TryGetArg("username", out string username);
+        CPH.TryGetArg("userName", out string username);
         CPH.TryGetArg("msgId", out string msgId);
 
         int tempvip_duration = CPH.GetGlobalVar<int>("tempvip_duration", true);
@@ -57,15 +56,18 @@ public class CPHInline
             else if (usr_roll == 20)
             {
                 // Crit success \o/
-                outputMsg = $"WAHOO You just rolled a NAT20 and became a VIP! PogChamp";
+                outputMsg = $"WAHOO You just rolled a NAT20 and became a VIP for {tempvip_duration} days! PogChamp";
                 CPH.AddUserIdToGroup(userId,Platform.Twitch,groupName);
                 CPH.SetTwitchUserVarById(userId,"tempvip_expiry",tempvip_expiry,true);
-                CPH.TwitchAddVip(username);
+                if(CPH.TwitchAddVip(username))
+				{
+					CPH.LogError($"FAILED TO ADD {username} AS VIP!");
+				}
             }
             else
             {
                 // Meh success -.-
-                outputMsg = $"Sorry, it's not your day. Rolled {usr_roll}";
+                outputMsg = $"Sorry, it's not your day {username}. Rolled {usr_roll}";
             }
         }
 
