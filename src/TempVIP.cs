@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 #if EXTERNAL_EDITOR
 public class TempVIP : CPHInlineBase
@@ -6,7 +7,11 @@ public class TempVIP : CPHInlineBase
 public class CPHInline
 #endif
 {
-    public bool Execute()
+    string groupName = "TEMPVIP";
+    string durationName = "tempvip_duration";
+    string userVarName = "tempvip_expiry";
+
+    public bool d20()
     {
         // THE PLAN
         // 1. User rolls D20
@@ -18,15 +23,14 @@ public class CPHInline
         CPH.TryGetArg("userName", out string username);
         CPH.TryGetArg("msgId", out string msgId);
 
-        int tempvip_duration = CPH.GetGlobalVar<int>("tempvip_duration", true);
+        int tempvip_duration = CPH.GetGlobalVar<int>(durationName, true);
         if(tempvip_duration<1)
         {
             // DEFAULT DAYS
             tempvip_duration=30;
-            CPH.SetGlobalVar("tempvip_duration", tempvip_duration);
+            CPH.SetGlobalVar(durationName, tempvip_duration);
         }
         
-        string groupName = "TEMPVIP";
         if (!CPH.GroupExists(groupName))
         {
             CPH.AddGroup(groupName);
@@ -58,7 +62,7 @@ public class CPHInline
                 // Crit success \o/
                 outputMsg = $"WAHOO You just rolled a NAT20 and became a VIP for {tempvip_duration} days! PogChamp";
                 CPH.AddUserIdToGroup(userId,Platform.Twitch,groupName);
-                CPH.SetTwitchUserVarById(userId,"tempvip_expiry",tempvip_expiry,true);
+                CPH.SetTwitchUserVarById(userId,userVarName,tempvip_expiry,true);
                 if(CPH.TwitchAddVip(username))
 				{
 					CPH.LogError($"FAILED TO ADD {username} AS VIP!");
@@ -67,11 +71,37 @@ public class CPHInline
             else
             {
                 // Meh success -.-
-                outputMsg = $"Sorry, it's not your day {username}. Rolled {usr_roll}";
+                outputMsg = $"Sorry, it's not your day {username}. You rolled {usr_roll}";
             }
         }
 
         CPH.TwitchReplyToMessage(outputMsg, msgId);
+        return true;
+    }
+
+    public bool RemoveTempVIP()
+    {
+        if (!CPH.GroupExists(groupName))
+        {
+            CPH.AddGroup(groupName);
+        }
+
+        List<GroupUser> groupUsers = CPH.UsersInGroup(groupName);
+
+        foreach(GroupUser userInfo in groupUsers)
+        {
+            string uid = userInfo.Id;
+            string uname = userInfo.Username;
+            long curTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long tempvip_expiry = CPH.GetTwitchUserVarById<long>(uid,userVarName, true);
+            if (curTime > tempvip_expiry)
+            {
+                CPH.RemoveUserIdFromGroup(uid,Platform.Twitch,groupName);
+                CPH.UnsetTwitchUserVarById(uid,userVarName, true);
+                CPH.TwitchRemoveVip(uname);
+            }
+        }
+
         return true;
     }
 }
